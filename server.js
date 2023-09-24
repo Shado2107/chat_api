@@ -1,6 +1,9 @@
 const express = require("express");
 const dotenv = require("dotenv").config();
 const connectDB = require("./utils/db")
+const socket = require("socket.io")
+const cors = require("cors")
+
 
 
 const app = express();
@@ -24,15 +27,40 @@ app.get("/", (req, res)=>{
 //Start server only when we have valid connection
 connectDB().then(() => {
     try{
-
         //Demarrage du serveur sur le PORT = 3000
-        app.listen(PORT, () => {
+       const server =  app.listen(PORT, () => {
             console.log(`Server is running on port ${PORT}`)
         })
 
     } catch(error) {
         console.log("cannot connect to the server");
     }
+
+    const io = socket(server, {
+        cors : {
+            origin: "http://localhost:3000",
+            credentials: true,
+        }
+    });
+
+    global.onlineUsers = new Map();
+    io.on("connecction", (socket)=> {
+        global.chatSocket = socket;
+        socket.on("add-user", (userId) => {
+            onlineUsers.set(userId, socket.id);
+        })
+    })
+
+    socket.on("send-msg", (data) => {
+        const sendUserSocket = onlineUsers.get(data.to);
+        if(sendUserSocket){
+            socket.to(sendUserSocket).emit("msg-receive", data.msg)
+        };
+    });
+
+
 }).catch(error => {
-    console.log("Invalid database connection...!")
+    console.log("Invalid database connection...!", error)
 }) 
+
+
