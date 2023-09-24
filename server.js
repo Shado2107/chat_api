@@ -1,4 +1,6 @@
 const express = require("express");
+const authRoutes = require("./routes/auth");
+const messageRoutes = require("./routes/messages")
 const dotenv = require("dotenv").config();
 const connectDB = require("./utils/db")
 const socket = require("socket.io")
@@ -21,7 +23,8 @@ app.get("/", (req, res)=>{
 
 
 //api routes
-
+app.use("/api/auth", authRoutes);
+app.use("/api/messages", messageRoutes);
 
 
 //Start server only when we have valid connection
